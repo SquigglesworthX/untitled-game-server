@@ -1,0 +1,12 @@
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\Assembly-CSharp.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\Assembly-CSharp.pdb
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\UnityEditor.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\UnityEngine.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\UnityEngine.UI.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\Mono.Cecil.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\nunit.framework.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\Unity.DataContract.dll
+F:\Development\Unity\InfiniteWorld\Temp\bin\Debug\ICSharpCode.NRefactory.dll
+F:\Development\Unity\InfiniteWorld\obj\Debug\Assembly-CSharp-vs.csprojResolveAssemblyReference.cache
+F:\Development\Unity\InfiniteWorld\obj\Debug\Assembly-CSharp.dll
+F:\Development\Unity\InfiniteWorld\obj\Debug\Assembly-CSharp.pdb
