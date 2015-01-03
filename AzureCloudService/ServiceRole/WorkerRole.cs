@@ -9,6 +9,8 @@ using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Diagnostics;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.Storage;
+using GameLibrary.Data.Model;
+using GameLibrary.Data.Core;
 
 namespace ServiceRole
 {
@@ -43,6 +45,8 @@ namespace ServiceRole
 
             Trace.TraceInformation("ServiceRole has been started");
 
+            InsertTest();
+
             return result;
         }
 
@@ -66,6 +70,21 @@ namespace ServiceRole
                 Trace.TraceInformation("Working");
                 await Task.Delay(1000);
             }
+        }
+
+        //This is a test function to demonstrate the azure table storage
+        private string InsertTest()
+        {
+            Idea idea = new Idea()
+            {
+                Body = "Test body goes in here.",
+                Name = "Test name",
+                IdeaId = Guid.NewGuid()
+            };
+            var context = ContextFactory.GetContext();
+            context.IdeaRepository.Insert(idea);
+
+            return idea.IdeaId.ToString();
         }
     }
 }
