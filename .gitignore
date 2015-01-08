@@ -41,3 +41,16 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# User files
+*.suo
+*.user
+
+# Built directories
+AzureCloudService/AzureCloudService/bin
+AzureCloudService/AzureCloudService/obj
+AzureCloudService/packages
+AzureCloudService/ServiceRole/bin
+AzureCloudService/ServiceRole/obj
+GameLibrary/bin
+GameLibrary/obj
