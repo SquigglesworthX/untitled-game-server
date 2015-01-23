@@ -11,6 +11,7 @@ using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.Storage;
 using GameLibrary.Data.Model;
 using GameLibrary.Data.Core;
+using Newtonsoft.Json;
 
 namespace ServiceRole
 {
@@ -45,7 +46,7 @@ namespace ServiceRole
 
             Trace.TraceInformation("ServiceRole has been started");
 
-            InsertTest();
+            FetchTest(InsertTest());
 
             return result;
         }
@@ -81,10 +82,25 @@ namespace ServiceRole
                 Name = "Test name",
                 IdeaId = Guid.NewGuid()
             };
+            Idea idea2 = new Idea()
+            {
+                Body = "Test body goes in here.",
+                Name = "Test name",
+                IdeaId = Guid.NewGuid()
+            };
+            idea.RelatedIdeas = new List<Idea>();
+            idea.RelatedIdeas.Add(idea2);
             var context = ContextFactory.GetContext();
             context.IdeaRepository.Insert(idea);
 
             return idea.IdeaId.ToString();
         }
+
+        private Idea FetchTest(string id)
+        {
+            var context = ContextFactory.GetContext();
+            return context.IdeaRepository.GetById(id);
+        }
+
     }
 }

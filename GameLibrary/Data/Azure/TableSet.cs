@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,6 +99,15 @@ namespace GameLibrary.Data.Azure
             table.Execute(insertOperation);
         }
 
+        public virtual TEntity GetById(object id)
+        {
+            var query = new TableQuery().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToString()));
+            var result = table.ExecuteQuery(query).First();
+
+            dynamic mapped = StripDTO(result);
+            return mapped;
+        }
+
         #region object mapping
         dynamic CreateDTO(TEntity a)
         {
@@ -109,10 +119,14 @@ namespace GameLibrary.Data.Azure
             //now set all the entity properties
             foreach (System.Reflection.PropertyInfo p in t1.GetProperties())
             {
-                //Exclude lists so we can use them for related lookups.
-                if (p.PropertyType.GetInterface(typeof(System.Collections.Generic.IEnumerable<>).FullName) == null)
+                if (IsPrimaryType(p.PropertyType))
                 {
-                    dto.TrySetMember(p.Name, p.GetValue(a, null) == null ? "" : p.GetValue(a, null));
+                    dto.TrySetMember(p.Name, p.GetValue(a, null) ?? "");
+                }
+                else
+                {
+                    string json = JsonConvert.SerializeObject(p.GetValue(a, null) ?? "");
+                    dto.TrySetMember(p.Name, json);
                 }
             }
 
@@ -135,13 +149,26 @@ namespace GameLibrary.Data.Azure
                 {
                     if (p1.Name == value.Key)
                     {
-                        p1.SetValue(result, GetValue(value.Value));
+                        if (IsPrimaryType(p1.PropertyType))
+                        {
+                            p1.SetValue(result, GetValue(value.Value));
+                        }
+                        else
+                        {
+                            object val = JsonConvert.DeserializeObject(GetValue(value.Value).ToString(), p1.PropertyType);
+                            p1.SetValue(result, val);
+                        }
                     }
                 }
 
             }
 
             return result;
+        }
+
+        private static bool IsPrimaryType(Type pt)
+        {
+            return (pt == typeof(byte[]) || pt == typeof(bool) || pt == typeof(DateTimeOffset) || pt == typeof(DateTime) || pt == typeof(double) || pt == typeof(Guid) || pt == typeof(int) || pt == typeof(long) || pt == typeof(string));
         }
 
         private object GetValue(EntityProperty source)

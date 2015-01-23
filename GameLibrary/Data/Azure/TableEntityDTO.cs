@@ -97,6 +97,7 @@ namespace GameLibrary.Data.Azure
         /// <summary>
         /// Convert object value to EntityProperty.
         /// </summary>
+
         private EntityProperty ConvertToEntityProperty(string key, object value)
         {
             if (value == null) return new EntityProperty((string)null);
