@@ -93,7 +93,7 @@ namespace ServiceRole
             var context = ContextFactory.GetContext();
             context.IdeaRepository.Add(idea);
 
-            return idea.IdeaId.ToString();
+            return idea.IdeaId;
         }
 
         private Idea FetchTest(string id)
