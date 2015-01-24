@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Azure.Repositories
 {
-    internal abstract class RepositoryBase<TEntity> : IRepositoryBase<TEntity> where TEntity : class, new()
+    internal abstract class RepositoryBase<TEntity> : IRepositoryBase<TEntity> 
+        where TEntity : class, new()
     {
         internal AzureContext context;
         internal string TableName;
@@ -25,19 +26,55 @@ namespace GameLibrary.Data.Azure.Repositories
             this.dbset = context.Set<TEntity>(tableName, rowKeyFunction, partitionKeyFunction);
         }
 
-        public virtual List<TEntity> GetAll()
-        {
-            return dbset.GetAll();
-        }
-
-        public virtual void Insert(TEntity entity)
-        {
-            dbset.Insert(entity);
-        }
-
         public TEntity GetById(string id)
         {
             return dbset.GetById(id);
+        }
+
+        public void Add(TEntity item)
+        {
+            dbset.Insert(item);
+        }
+        
+        // Woo. Clearing everything in one shot.
+        public void Clear()
+        {
+            dbset.GetAll().Clear();
+        }
+
+        public bool Contains(TEntity item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(TEntity[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int Count
+        {
+            get { return dbset.GetAll().Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public bool Remove(TEntity item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator<TEntity> GetEnumerator()
+        {
+            return dbset.GetAll().GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
     }
 }

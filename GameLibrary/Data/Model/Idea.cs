@@ -8,7 +8,7 @@ namespace GameLibrary.Data.Model
 {
     public class Idea
     {
-        public Guid IdeaId { get; set; }
+        public string IdeaId { get; set; }
         public string Name { get; set; }
         public string Body { get; set; }
 

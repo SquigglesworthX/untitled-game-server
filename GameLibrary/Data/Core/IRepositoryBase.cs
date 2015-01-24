@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Core
 {
-    public interface IRepositoryBase<TEntity> where TEntity : class, new()
+    public interface IRepositoryBase<TEntity>: ICollection<TEntity>
+        where TEntity : class, new()
     {
         //Need to add in a caching layer here plus any relevant functions (search by Id, etc)
-        List<TEntity> GetAll();
-        void Insert(TEntity entity);
+        //List<TEntity> GetAll();
+        //void Insert(TEntity entity);
         TEntity GetById(string id);
     }
 }
