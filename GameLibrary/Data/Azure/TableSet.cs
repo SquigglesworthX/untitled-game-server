@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using GameLibrary.Data.Model;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 using System;
@@ -10,10 +11,9 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Azure
 {
-    internal class TableSet<TEntity> where TEntity : new()
+    internal class TableSet<TEntity> where TEntity : BaseModel, new()
     {
         private Func<TEntity, string> partitionKeyFunction;
-        private Func<TEntity, string> rowKeyFunction;
         private string tableName;
         private string connectionString;
 
@@ -21,57 +21,16 @@ namespace GameLibrary.Data.Azure
         internal CloudTable table;
 
         /// <summary>
-        /// Creates a new TableSet, using the entity name as the partition key and a random guid as the row key. 
-        /// </summary>
-        /// <param name="connectionString">The Azure connection string.</param>
-        /// <param name="tableName">The name of the table in Azure storage.</param>
-        public TableSet(string connectionString, string tableName)
-            : this(connectionString, tableName, null, null) { }
-
-        /// <summary>
-        /// Creates a new TableSet, using the entity name as the partition key. 
-        /// </summary>
-        /// <param name="connectionString">The Azure connection string.</param>
-        /// <param name="tableName">The name of the table in Azure storage.</param>
-        /// <param name="rowKeyFunction">A function to be performed against the entity that returns a string to be used as the row key.</param>
-        public TableSet(string connectionString, string tableName, Func<TEntity, string> rowKeyFunction)
-            : this(connectionString, tableName, rowKeyFunction, null) { }
-
-        /// <summary>
         /// Creates a new TableSet, using the functions provided to assign row and partition keys. 
         /// </summary>
         /// <param name="connectionString">The Azure connection string.</param>
-        /// <param name="tableName">The name of the table in Azure storage.</param>
-        /// <param name="rowKeyFunction">A function to be performed against the entity that returns a string to be used as the row key.</param>
+        /// <param name="tableName">The name of the table in Azure storage.</param>       
         /// <param name="partitionKeyFunction">A function to be performed against the entity that returns a string to be used as the partition key.</param>
-        public TableSet(string connectionString, string tableName, Func<TEntity, string> rowKeyFunction, Func<TEntity, string> partitionKeyFunction)
+        public TableSet(string connectionString, string tableName, Func<TEntity, string> partitionKeyFunction)
         {
-            if (partitionKeyFunction == null)
-            {
-                partitionKeyFunction = (t) =>
-                    {
-                        string partitionKey = typeof(TEntity).Name;
-
-                        //pluralise the partition key (because basically it is the 'table' name).
-                        if (partitionKey.Substring(partitionKey.Length - 1, 1).ToLower() == "y")
-                            partitionKey = partitionKey.Substring(0, partitionKey.Length - 1) + "ies";
-
-                        if (partitionKey.Substring(partitionKey.Length - 1, 1).ToLower() != "s")
-                            partitionKey = partitionKey + "s";
-                        return partitionKey;
-                    };
-            }
-
-            if (rowKeyFunction == null)
-            {
-                rowKeyFunction = (t) =>
-                { return Guid.NewGuid().ToString(); };
-            }
-
             this.tableName = tableName;
             this.connectionString = connectionString;
             this.partitionKeyFunction = partitionKeyFunction;
-            this.rowKeyFunction = rowKeyFunction;
 
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
             tableClient = storageAccount.CreateCloudTableClient();
@@ -116,7 +75,7 @@ namespace GameLibrary.Data.Azure
             Type t1 = a.GetType();
             Type t2 = dto.GetType();
 
-            //now set all the entity properties
+            //not returning inherited properties, need to fix this for rowkey
             foreach (System.Reflection.PropertyInfo p in t1.GetProperties())
             {
                 if (IsPrimaryType(p.PropertyType))
@@ -130,7 +89,8 @@ namespace GameLibrary.Data.Azure
                 }
             }
 
-            dto.RowKey = rowKeyFunction(a);
+            //Should be set through the basemodel property
+            //dto.RowKey = rowKeyFunction(a);
             dto.PartitionKey = partitionKeyFunction(a);
 
             return dto;
@@ -175,6 +135,8 @@ namespace GameLibrary.Data.Azure
         {
             switch (source.PropertyType)
             {
+                case EdmType.String:
+                    return (object)source.StringValue;
                 case EdmType.Binary:
                     return (object)source.BinaryValue;
                 case EdmType.Boolean:
@@ -189,8 +151,6 @@ namespace GameLibrary.Data.Azure
                     return (object)source.Int32Value;
                 case EdmType.Int64:
                     return (object)source.Int64Value;
-                case EdmType.String:
-                    return (object)source.StringValue;
                 default: throw new TypeLoadException(string.Format("not supported edmType:{0}", source.PropertyType));
             }
         }

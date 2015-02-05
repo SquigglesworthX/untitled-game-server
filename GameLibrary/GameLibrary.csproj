@@ -11,6 +11,8 @@
     <AssemblyName>GameLibrary</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\AzureCloudService\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -65,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Azure\AzureContext.cs" />
+    <Compile Include="Data\Azure\Model\AzureRelationship.cs" />
     <Compile Include="Data\Azure\Repositories\IdeaRepository.cs" />
     <Compile Include="Data\Azure\Repositories\RepositoryBase.cs" />
     <Compile Include="Data\Azure\TableEntityDTO.cs" />
@@ -73,6 +76,7 @@
     <Compile Include="Data\Core\IContext.cs" />
     <Compile Include="Data\Core\ContextFactory.cs" />
     <Compile Include="Data\Model\Idea.cs" />
+    <Compile Include="Data\Model\BaseModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -82,6 +86,7 @@
     <Folder Include="Data\Json\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

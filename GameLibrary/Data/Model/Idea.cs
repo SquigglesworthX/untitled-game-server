@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Model
 {
-    public class Idea
+    public class Idea : BaseModel
     {
-        public string IdeaId { get; set; }
+        //public string IdeaId { get; set; }
         public string Name { get; set; }
         public string Body { get; set; }
 

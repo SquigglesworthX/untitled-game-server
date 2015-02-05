@@ -1,4 +1,5 @@
 ﻿using GameLibrary.Data.Core;
+using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
@@ -9,21 +10,33 @@ using System.Threading.Tasks;
 namespace GameLibrary.Data.Azure.Repositories
 {
     internal abstract class RepositoryBase<TEntity> : IRepositoryBase<TEntity> 
-        where TEntity : class, new()
+        where TEntity : BaseModel, new()
     {
         internal AzureContext context;
         internal string TableName;
         internal TableSet<TEntity> dbset;
-        protected Func<TEntity, string> RowKeyFunction;
         protected Func<TEntity, string> partitionKeyFunction;
 
-        public RepositoryBase(AzureContext context, string tableName, Func<TEntity, string> rowKeyFunction, Func<TEntity, string> partitionKeyFunction)
+        public RepositoryBase(AzureContext context, string tableName = null, Func<TEntity, string> partitionKeyFunction = null)
         {
             this.context = context;
+            if (tableName == null)
+            {
+                tableName = typeof(TEntity).Name;
+            }
             this.TableName = tableName;
-            this.RowKeyFunction = rowKeyFunction;
+
+            //Should find a better key that date.
+            if (partitionKeyFunction == null)
+            {
+                partitionKeyFunction = (t) =>
+                    {
+                        return DateTime.Now.Date.ToString("MMddyy");
+                    };
+            }
+
             this.partitionKeyFunction = partitionKeyFunction;
-            this.dbset = context.Set<TEntity>(tableName, rowKeyFunction, partitionKeyFunction);
+            this.dbset = context.Set<TEntity>(tableName, partitionKeyFunction);
         }
 
         public TEntity GetById(string id)

@@ -80,20 +80,20 @@ namespace ServiceRole
             {
                 Body = "Test body goes in here.",
                 Name = "Test name",
-                IdeaId = Guid.NewGuid().ToString()
+                RowKey = Guid.NewGuid().ToString()
             };
             Idea idea2 = new Idea()
             {
                 Body = "Test body goes in here.",
                 Name = "Test name",
-                IdeaId = Guid.NewGuid().ToString()
+                RowKey = Guid.NewGuid().ToString()
             };
             idea.RelatedIdeas = new List<Idea>();
             idea.RelatedIdeas.Add(idea2);
             var context = ContextFactory.GetContext();
             context.IdeaRepository.Add(idea);
 
-            return idea.IdeaId;
+            return idea.RowKey;
         }
 
         private Idea FetchTest(string id)

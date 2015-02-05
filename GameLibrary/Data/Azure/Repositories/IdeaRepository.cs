@@ -12,17 +12,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         //Might be a cleaner way to do this..
         public IdeaRepository(AzureContext context)
-            : base(context, "Idea", 
-            //rowkey
-            (t) =>
-            {
-                return t.Name;      
-            }, 
-            //partitionkey
-            (t) =>
-            {
-                return t.IdeaId.ToString();
-            })
+            : base(context)
         {
             if (context == null)
                 throw new ArgumentNullException("Context cannot be null!");
