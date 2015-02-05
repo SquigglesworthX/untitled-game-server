@@ -47,7 +47,9 @@ Temporary Items
 *.user
 
 # Built directories
+AzureCloudService/.nuget
 AzureCloudService/AzureCloudService/bin
+AzureCloudService/AzureCloudService/csx
 AzureCloudService/AzureCloudService/obj
 AzureCloudService/packages
 AzureCloudService/ServiceRole/bin
