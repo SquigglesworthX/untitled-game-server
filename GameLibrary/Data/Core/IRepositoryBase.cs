@@ -10,7 +10,7 @@ namespace GameLibrary.Data.Core
         where TEntity : class, new()
     {
         //Need to add in a caching layer here plus any relevant functions (search by Id, etc)
-        //List<TEntity> GetAll();
+        List<TEntity> GetAll();
         //void Insert(TEntity entity);
         TEntity GetById(string id);
     }

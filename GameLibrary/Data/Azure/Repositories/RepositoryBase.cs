@@ -1,4 +1,5 @@
-﻿using GameLibrary.Data.Core;
+﻿using GameLibrary.Data.Azure.Identity;
+using GameLibrary.Data.Core;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
@@ -15,11 +16,17 @@ namespace GameLibrary.Data.Azure.Repositories
         internal AzureContext context;
         internal string TableName;
         internal TableSet<TEntity> dbset;
+        internal UniqueIdGenerator Generator;
+
         protected Func<TEntity, string> partitionKeyFunction;
 
         public RepositoryBase(AzureContext context, string tableName = null, Func<TEntity, string> partitionKeyFunction = null)
         {
             this.context = context;
+
+            BlobOptimisticSyncStore store = new BlobOptimisticSyncStore(context.StorageAccount, "uniqueids", typeof(TEntity).Name + ".dat");
+            Generator = new UniqueIdGenerator(store);
+
             if (tableName == null)
             {
                 tableName = typeof(TEntity).Name;
@@ -40,12 +47,13 @@ namespace GameLibrary.Data.Azure.Repositories
         }
 
         public TEntity GetById(string id)
-        {
+        {       
             return dbset.GetById(id);
         }
 
         public void Add(TEntity item)
         {
+            item.RowKey = Generator.GetNextId();
             dbset.Insert(item);
         }
         
@@ -88,6 +96,11 @@ namespace GameLibrary.Data.Azure.Repositories
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             throw new NotImplementedException();
+        }
+
+        public List<TEntity> GetAll()
+        {
+            return dbset.GetAll();
         }
     }
 }

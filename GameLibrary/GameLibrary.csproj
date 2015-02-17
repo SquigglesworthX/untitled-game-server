@@ -67,11 +67,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Azure\AzureContext.cs" />
+    <Compile Include="Data\Azure\Identity\BlobOptimisticSyncStore.cs" />
+    <Compile Include="Data\Azure\Identity\IOptimisticSyncStore.cs" />
     <Compile Include="Data\Azure\Model\AzureRelationship.cs" />
     <Compile Include="Data\Azure\Repositories\IdeaRepository.cs" />
     <Compile Include="Data\Azure\Repositories\RepositoryBase.cs" />
     <Compile Include="Data\Azure\TableEntityDTO.cs" />
     <Compile Include="Data\Azure\TableSet.cs" />
+    <Compile Include="Data\Azure\Identity\UniqueIdGenerator.cs" />
     <Compile Include="Data\Core\IRepositoryBase.cs" />
     <Compile Include="Data\Core\IContext.cs" />
     <Compile Include="Data\Core\ContextFactory.cs" />

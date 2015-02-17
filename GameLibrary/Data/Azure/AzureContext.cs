@@ -1,6 +1,7 @@
 ﻿using GameLibrary.Data.Azure.Repositories;
 using GameLibrary.Data.Core;
 using GameLibrary.Data.Model;
+using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace GameLibrary.Data.Azure
     internal class AzureContext : IContext
     {
         private string connection;
+        public CloudStorageAccount StorageAccount { get; private set; }
 
         private IdeaRepository ideaRepository;
 
@@ -19,6 +21,7 @@ namespace GameLibrary.Data.Azure
         {
             //Temporary for development. We should probably get rid of this constructor eventually. 
             connection = "UseDevelopmentStorage=true;";
+            StorageAccount = CloudStorageAccount.Parse(connection);
         }
 
         public AzureContext(string connectionString)
@@ -28,7 +31,8 @@ namespace GameLibrary.Data.Azure
 
         public TableSet<TEntity> Set<TEntity>(string tableName, Func<TEntity, string> partitionKeyFunction) where TEntity : BaseModel, new()
         {
-            var set = new TableSet<TEntity>(connection, tableName, partitionKeyFunction);
+            
+            var set = new TableSet<TEntity>(StorageAccount, tableName, partitionKeyFunction);
 
             return set;
         }

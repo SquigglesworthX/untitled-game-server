@@ -12,6 +12,7 @@ using Microsoft.WindowsAzure.Storage;
 using GameLibrary.Data.Model;
 using GameLibrary.Data.Core;
 using Newtonsoft.Json;
+using GameLibrary.Data.Azure.Identity;
 
 namespace ServiceRole
 {
@@ -46,6 +47,7 @@ namespace ServiceRole
 
             Trace.TraceInformation("ServiceRole has been started");
 
+            ChecksIds();
             FetchTest(InsertTest());
 
             return result;
@@ -76,30 +78,36 @@ namespace ServiceRole
         //This is a test function to demonstrate the azure table storage
         private string InsertTest()
         {
-            Idea idea = new Idea()
-            {
-                Body = "Test body goes in here.",
-                Name = "Test name",
-                RowKey = Guid.NewGuid().ToString()
-            };
-            Idea idea2 = new Idea()
-            {
-                Body = "Test body goes in here.",
-                Name = "Test name",
-                RowKey = Guid.NewGuid().ToString()
-            };
-            idea.RelatedIdeas = new List<Idea>();
-            idea.RelatedIdeas.Add(idea2);
             var context = ContextFactory.GetContext();
-            context.IdeaRepository.Add(idea);
+            for (int i = 0; i < 1024; i++)
+            {
+                Idea idea = new Idea()
+                {
+                    Body = "Test body goes in here.",
+                    Name = "Test name"
+                };
+                context.IdeaRepository.Add(idea);
+            }
 
-            return idea.RowKey;
+
+            return "";
         }
 
         private Idea FetchTest(string id)
         {
             var context = ContextFactory.GetContext();
             return context.IdeaRepository.GetById(id);
+        }
+
+        private void ChecksIds()
+        {
+            var context = ContextFactory.GetContext();
+            var ideas = context.IdeaRepository.GetAll();
+            int i = ideas.Count;
+            foreach (Idea idea in ideas.Where(t=>t.RowKey != null))
+            {
+                var t = UniqueIdGenerator.GetIntFromId(idea.RowKey);
+            }
         }
 
     }

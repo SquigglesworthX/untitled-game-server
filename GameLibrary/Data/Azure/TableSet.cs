@@ -15,7 +15,6 @@ namespace GameLibrary.Data.Azure
     {
         private Func<TEntity, string> partitionKeyFunction;
         private string tableName;
-        private string connectionString;
 
         internal CloudTableClient tableClient;
         internal CloudTable table;
@@ -26,13 +25,12 @@ namespace GameLibrary.Data.Azure
         /// <param name="connectionString">The Azure connection string.</param>
         /// <param name="tableName">The name of the table in Azure storage.</param>       
         /// <param name="partitionKeyFunction">A function to be performed against the entity that returns a string to be used as the partition key.</param>
-        public TableSet(string connectionString, string tableName, Func<TEntity, string> partitionKeyFunction)
+        public TableSet(CloudStorageAccount storageAccount, string tableName, Func<TEntity, string> partitionKeyFunction)
         {
             this.tableName = tableName;
-            this.connectionString = connectionString;
             this.partitionKeyFunction = partitionKeyFunction;
 
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
+            //CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
             tableClient = storageAccount.CreateCloudTableClient();
             table = tableClient.GetTableReference(tableName);
             table.CreateIfNotExists();
@@ -41,10 +39,18 @@ namespace GameLibrary.Data.Azure
         public virtual List<TEntity> GetAll()
         {
             List<TEntity> mappedList = new List<TEntity>();
-            var query = new TableQuery(); 
-            var result = table.ExecuteQuery(query).ToList();
+            var query = new TableQuery();
+            TableContinuationToken token = null;
 
-            foreach (var item in result)
+            var entities = new List<DynamicTableEntity>();
+            do
+            {
+                var queryResult = table.ExecuteQuerySegmented(new TableQuery(), token);
+                entities.AddRange(queryResult.Results);
+                token = queryResult.ContinuationToken;
+            } while (token != null);
+
+            foreach (var item in entities)
             {
                 mappedList.Add(StripDTO(item));
             }
@@ -90,7 +96,7 @@ namespace GameLibrary.Data.Azure
             }
 
             //Should be set through the basemodel property
-            //dto.RowKey = rowKeyFunction(a);
+            dto.RowKey = a.RowKey;
             dto.PartitionKey = partitionKeyFunction(a);
 
             return dto;
@@ -122,7 +128,7 @@ namespace GameLibrary.Data.Azure
                 }
 
             }
-
+            result.RowKey = a.RowKey;
             return result;
         }
 
