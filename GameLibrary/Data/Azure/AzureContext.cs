@@ -29,10 +29,10 @@ namespace GameLibrary.Data.Azure
             connection = connectionString;
         }
 
-        public TableSet<TEntity> Set<TEntity>(string tableName, Func<TEntity, string> partitionKeyFunction) where TEntity : BaseModel, new()
+        public TableSet<TEntity> Set<TEntity>(string tableName) where TEntity : BaseModel, new()
         {
             
-            var set = new TableSet<TEntity>(StorageAccount, tableName, partitionKeyFunction);
+            var set = new TableSet<TEntity>(StorageAccount, tableName);
 
             return set;
         }

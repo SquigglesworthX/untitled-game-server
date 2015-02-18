@@ -1,4 +1,5 @@
-﻿using GameLibrary.Data.Model;
+﻿using GameLibrary.Data.Core;
+using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
@@ -13,7 +14,6 @@ namespace GameLibrary.Data.Azure
 {
     internal class TableSet<TEntity> where TEntity : BaseModel, new()
     {
-        private Func<TEntity, string> partitionKeyFunction;
         private string tableName;
 
         internal CloudTableClient tableClient;
@@ -23,12 +23,10 @@ namespace GameLibrary.Data.Azure
         /// Creates a new TableSet, using the functions provided to assign row and partition keys. 
         /// </summary>
         /// <param name="connectionString">The Azure connection string.</param>
-        /// <param name="tableName">The name of the table in Azure storage.</param>       
-        /// <param name="partitionKeyFunction">A function to be performed against the entity that returns a string to be used as the partition key.</param>
-        public TableSet(CloudStorageAccount storageAccount, string tableName, Func<TEntity, string> partitionKeyFunction)
+        /// <param name="tableName">The name of the table in Azure storage.</param>               
+        public TableSet(CloudStorageAccount storageAccount, string tableName)
         {
             this.tableName = tableName;
-            this.partitionKeyFunction = partitionKeyFunction;
 
             //CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
             tableClient = storageAccount.CreateCloudTableClient();
@@ -97,7 +95,7 @@ namespace GameLibrary.Data.Azure
 
             //Should be set through the basemodel property
             dto.RowKey = a.RowKey;
-            dto.PartitionKey = partitionKeyFunction(a);
+            dto.PartitionKey = a.PartitionKey;
 
             return dto;
         }
@@ -111,18 +109,30 @@ namespace GameLibrary.Data.Azure
 
             foreach (PropertyInfo p1 in t1.GetProperties())//for each property in the entity,
             {
-                foreach (var value in dictionary)//see if we have a correspinding property in the DTO
+                bool isExcluded = false;
+                foreach (object attribute in p1.GetCustomAttributes(true))
                 {
-                    if (p1.Name == value.Key)
+                    if (attribute is ExcludedAttribute)
                     {
-                        if (IsPrimaryType(p1.PropertyType))
+                        isExcluded = true;
+                    }
+                }
+
+                if (!isExcluded)
+                {
+                    foreach (var value in dictionary)//see if we have a correspinding property in the DTO
+                    {
+                        if (p1.Name == value.Key)
                         {
-                            p1.SetValue(result, GetValue(value.Value));
-                        }
-                        else
-                        {
-                            object val = JsonConvert.DeserializeObject(GetValue(value.Value).ToString(), p1.PropertyType);
-                            p1.SetValue(result, val);
+                            if (IsPrimaryType(p1.PropertyType))
+                            {
+                                p1.SetValue(result, GetValue(value.Value));
+                            }
+                            else
+                            {
+                                object val = JsonConvert.DeserializeObject(GetValue(value.Value).ToString(), p1.PropertyType);
+                                p1.SetValue(result, val);
+                            }
                         }
                     }
                 }

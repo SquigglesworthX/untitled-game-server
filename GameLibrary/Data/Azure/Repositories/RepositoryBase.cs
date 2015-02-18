@@ -43,7 +43,7 @@ namespace GameLibrary.Data.Azure.Repositories
             }
 
             this.partitionKeyFunction = partitionKeyFunction;
-            this.dbset = context.Set<TEntity>(tableName, partitionKeyFunction);
+            this.dbset = context.Set<TEntity>(tableName);
         }
 
         public TEntity GetById(string id)
@@ -54,6 +54,8 @@ namespace GameLibrary.Data.Azure.Repositories
         public void Add(TEntity item)
         {
             item.RowKey = Generator.GetNextId();
+            item.PartitionKey = partitionKeyFunction(item);            
+
             dbset.Insert(item);
         }
         

@@ -14,7 +14,7 @@ namespace GameLibrary.Data.Azure.Identity
     {
         private readonly int RangeSize;
         private readonly int MaxRetries;
-        private readonly object padlock;
+        private readonly object padlock = new object();
         private readonly IOptimisticSyncStore OptimisticSyncStore;
 
         public long CurrentId { get; private set; }

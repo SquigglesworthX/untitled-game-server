@@ -15,11 +15,16 @@ namespace GameLibrary.Data.Model
         /// <summary>
         /// Protected and a field so that it doesn't get serialized. Used to support relationships.
         /// </summary>
-        protected List<AzureRelationship> Relationships;
+        protected List<RelationshipMapping> Relationships;
 
         /// <summary>
         /// Unique id used in the Azure rowkey.
         /// </summary>
         public string RowKey;
+
+        /// <summary>
+        /// Unique id used in the Azure partitionkey.
+        /// </summary>
+        public string PartitionKey;
     }
 }
