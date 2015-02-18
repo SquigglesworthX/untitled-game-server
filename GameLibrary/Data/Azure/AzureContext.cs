@@ -1,4 +1,5 @@
-﻿using GameLibrary.Data.Azure.Repositories;
+﻿using GameLibrary.Data.Azure.Model;
+using GameLibrary.Data.Azure.Repositories;
 using GameLibrary.Data.Core;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage;
@@ -16,6 +17,7 @@ namespace GameLibrary.Data.Azure
         public CloudStorageAccount StorageAccount { get; private set; }
 
         private IdeaRepository ideaRepository;
+        private RelationshipRepository relationshipRepository;
 
         public AzureContext()
         {
@@ -29,14 +31,6 @@ namespace GameLibrary.Data.Azure
             connection = connectionString;
         }
 
-        public TableSet<TEntity> Set<TEntity>(string tableName) where TEntity : BaseModel, new()
-        {
-            
-            var set = new TableSet<TEntity>(StorageAccount, tableName);
-
-            return set;
-        }
-
         public IRepositoryBase<Idea> IdeaRepository
         {
             get
@@ -45,6 +39,17 @@ namespace GameLibrary.Data.Azure
                     ideaRepository = new IdeaRepository(this);
 
                 return ideaRepository;
+            }
+        }
+
+        public IRepositoryBase<Relationship> RelationshipRepository
+        {
+            get
+            {
+                if (relationshipRepository == null)
+                    relationshipRepository = new RelationshipRepository(this);
+
+                return relationshipRepository;
             }
         }
 

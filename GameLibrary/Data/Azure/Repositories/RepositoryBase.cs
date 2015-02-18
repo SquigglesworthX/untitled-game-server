@@ -43,7 +43,7 @@ namespace GameLibrary.Data.Azure.Repositories
             }
 
             this.partitionKeyFunction = partitionKeyFunction;
-            this.dbset = context.Set<TEntity>(tableName);
+            this.dbset = new TableSet<TEntity>(context.StorageAccount, tableName);
         }
 
         public TEntity GetById(string id)
