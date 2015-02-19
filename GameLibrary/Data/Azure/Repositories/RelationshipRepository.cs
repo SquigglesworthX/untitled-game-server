@@ -12,8 +12,7 @@ namespace GameLibrary.Data.Azure.Repositories
         public RelationshipRepository(AzureContext context)
             : base(context, partitionKeyFunction: (a) => a.Name + "_" + a.DocumentId)
         {
-            if (context == null)
-                throw new ArgumentNullException("Context cannot be null!");
+
         }
     }
 }

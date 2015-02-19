@@ -15,6 +15,7 @@ namespace GameLibrary.Data.Azure
     internal class TableSet<TEntity> where TEntity : BaseModel, new()
     {
         private string tableName;
+        private AzureContext Context;
 
         internal CloudTableClient tableClient;
         internal CloudTable table;
@@ -24,12 +25,13 @@ namespace GameLibrary.Data.Azure
         /// </summary>
         /// <param name="connectionString">The Azure connection string.</param>
         /// <param name="tableName">The name of the table in Azure storage.</param>               
-        public TableSet(CloudStorageAccount storageAccount, string tableName)
+        public TableSet(AzureContext context, string tableName)
         {
             this.tableName = tableName;
+            this.Context = context;
 
             //CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
-            tableClient = storageAccount.CreateCloudTableClient();
+            tableClient = context.StorageAccount.CreateCloudTableClient();
             table = tableClient.GetTableReference(tableName);
             table.CreateIfNotExists();
         }
@@ -110,17 +112,22 @@ namespace GameLibrary.Data.Azure
             foreach (PropertyInfo p1 in t1.GetProperties())//for each property in the entity,
             {
                 bool isExcluded = false;
+                RelationshipAttribute attr = null;
                 foreach (object attribute in p1.GetCustomAttributes(true))
                 {
                     if (attribute is ExcludedAttribute)
                     {
                         isExcluded = true;
                     }
+                    if (attribute is RelationshipAttribute)
+                    {
+                        attr = (RelationshipAttribute)attribute;
+                    }
                 }
 
                 if (!isExcluded)
                 {
-                    foreach (var value in dictionary)//see if we have a correspinding property in the DTO
+                    foreach (var value in dictionary)//see if we have a corresponding property in the DTO
                     {
                         if (p1.Name == value.Key)
                         {

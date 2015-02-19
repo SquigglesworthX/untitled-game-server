@@ -1,4 +1,5 @@
 ﻿using GameLibrary.Data.Azure.Model;
+using GameLibrary.Data.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,9 @@ namespace GameLibrary.Data.Model
     public class BaseModel
     {
         /// <summary>
-        /// Protected and a field so that it doesn't get serialized. Used to support relationships.
+        /// Used to support relationships.
         /// </summary>
+        [Excluded()]
         protected List<RelationshipMapping> Relationships;
 
         /// <summary>

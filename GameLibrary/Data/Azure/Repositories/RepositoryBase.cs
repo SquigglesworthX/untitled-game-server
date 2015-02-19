@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Azure.Repositories
 {
-    internal abstract class RepositoryBase<TEntity> : IRepositoryBase<TEntity> 
+    internal class RepositoryBase<TEntity> : IRepositoryBase<TEntity> 
         where TEntity : BaseModel, new()
     {
         internal AzureContext context;
@@ -22,6 +22,9 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public RepositoryBase(AzureContext context, string tableName = null, Func<TEntity, string> partitionKeyFunction = null)
         {
+            if (context == null)
+                throw new ArgumentNullException("Context cannot be null!");
+
             this.context = context;
 
             BlobOptimisticSyncStore store = new BlobOptimisticSyncStore(context.StorageAccount, "uniqueids", typeof(TEntity).Name + ".dat");
@@ -43,7 +46,7 @@ namespace GameLibrary.Data.Azure.Repositories
             }
 
             this.partitionKeyFunction = partitionKeyFunction;
-            this.dbset = new TableSet<TEntity>(context.StorageAccount, tableName);
+            this.dbset = new TableSet<TEntity>(context, tableName);
         }
 
         public TEntity GetById(string id)

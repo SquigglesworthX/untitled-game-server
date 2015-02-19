@@ -16,8 +16,10 @@ namespace GameLibrary.Data.Azure
         private string connection;
         public CloudStorageAccount StorageAccount { get; private set; }
 
-        private IdeaRepository ideaRepository;
-        private RelationshipRepository relationshipRepository;
+        private RepositoryBase<Idea> ideaRepository;
+        private RepositoryBase<IdeaMapping> ideaMappingRepository;
+        private RepositoryBase<Relationship> relationshipRepository;
+        private RepositoryBase<Player> playerRepository;
 
         public AzureContext()
         {
@@ -36,7 +38,7 @@ namespace GameLibrary.Data.Azure
             get
             {
                 if (ideaRepository == null)
-                    ideaRepository = new IdeaRepository(this);
+                    ideaRepository = new RepositoryBase<Idea>(this);
 
                 return ideaRepository;
             }
@@ -47,9 +49,31 @@ namespace GameLibrary.Data.Azure
             get
             {
                 if (relationshipRepository == null)
-                    relationshipRepository = new RelationshipRepository(this);
+                    relationshipRepository = new RepositoryBase<Relationship>(this, partitionKeyFunction: (a) => a.Name + "_" + a.DocumentId);
 
                 return relationshipRepository;
+            }
+        }
+
+        public IRepositoryBase<IdeaMapping> IdeaMappingRepository
+        {
+            get
+            {
+                if (ideaMappingRepository == null)
+                    ideaMappingRepository = new RepositoryBase<IdeaMapping>(this);
+
+                return ideaMappingRepository;
+            }
+        }
+
+        public IRepositoryBase<Player> PlayerRepository
+        {
+            get
+            {
+                if (playerRepository == null)
+                    playerRepository = new RepositoryBase<Player>(this);
+
+                return playerRepository;
             }
         }
 
@@ -68,5 +92,8 @@ namespace GameLibrary.Data.Azure
             }
         }
         #endregion
+
+
+
     }
 }

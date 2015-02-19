@@ -84,6 +84,8 @@
     <Compile Include="Data\Core\RelationshipAttribute.cs" />
     <Compile Include="Data\Model\Idea.cs" />
     <Compile Include="Data\Model\BaseModel.cs" />
+    <Compile Include="Data\Model\IdeaMapping.cs" />
+    <Compile Include="Data\Model\Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

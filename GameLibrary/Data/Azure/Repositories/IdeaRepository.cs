@@ -10,11 +10,13 @@ namespace GameLibrary.Data.Azure.Repositories
     internal class IdeaRepository : RepositoryBase<Idea>
     {
 
+        /// <summary>
+        /// Class extending the base repository and overrides it with Idea specific functions. Not used anymore. Might be worth scrapping.
+        /// </summary>        
         public IdeaRepository(AzureContext context)
             : base(context)
         {
-            if (context == null)
-                throw new ArgumentNullException("Context cannot be null!");
+
         }
 
     }
