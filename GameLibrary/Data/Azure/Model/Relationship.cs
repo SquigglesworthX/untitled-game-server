@@ -11,11 +11,11 @@ namespace GameLibrary.Data.Azure.Model
     public class Relationship : BaseModel
     {
         [Excluded()]
-        public string Name;
+        public string Name { get; set; }
         [Excluded()]
-        public string DocumentId;
-        public string Id1;
-        public string Id2;        
+        public string DocumentId { get; set; }
+        public string Id1 { get; set; }
+        public string Id2 { get; set; }
         
     }
 }

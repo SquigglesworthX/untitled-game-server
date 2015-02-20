@@ -16,17 +16,21 @@ namespace GameLibrary.Data.Model
         /// <summary>
         /// Used to support relationships.
         /// </summary>
-        [Excluded()]
-        protected List<RelationshipMapping> Relationships;
+        public List<RelationshipMapping> Relationships { get; set; }
 
         /// <summary>
         /// Unique id used in the Azure rowkey.
         /// </summary>
-        public string RowKey;
+        public string RowKey { get; set; }
 
         /// <summary>
         /// Unique id used in the Azure partitionkey.
         /// </summary>
-        public string PartitionKey;
+        public string PartitionKey { get; set; }
+
+        /// <summary>
+        /// Identifier used in optimistic concurrency for Azure Storage.
+        /// </summary>
+        public string ETag { get; set; }
     }
 }

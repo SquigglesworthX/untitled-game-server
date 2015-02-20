@@ -1,4 +1,5 @@
-﻿using GameLibrary.Data.Core;
+﻿using GameLibrary.Data.Azure.Model;
+using GameLibrary.Data.Core;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -23,7 +24,7 @@ namespace GameLibrary.Data.Azure
         /// <summary>
         /// Creates a new TableSet, using the functions provided to assign row and partition keys. 
         /// </summary>
-        /// <param name="connectionString">The Azure connection string.</param>
+        /// <param name="context">An active Azure context.</param>
         /// <param name="tableName">The name of the table in Azure storage.</param>               
         public TableSet(AzureContext context, string tableName)
         {
@@ -81,23 +82,60 @@ namespace GameLibrary.Data.Azure
             Type t1 = a.GetType();
             Type t2 = dto.GetType();
 
-            //not returning inherited properties, need to fix this for rowkey
             foreach (System.Reflection.PropertyInfo p in t1.GetProperties())
             {
-                if (IsPrimaryType(p.PropertyType))
+                bool isExcluded = false;
+                RelationshipAttribute attr = null;
+                foreach (object attribute in p.GetCustomAttributes(true))
                 {
-                    dto.TrySetMember(p.Name, p.GetValue(a, null) ?? "");
+                    if (attribute is ExcludedAttribute)
+                    {
+                        isExcluded = true;
+                    }
+                    if (attribute is RelationshipAttribute)
+                    {
+                        attr = (RelationshipAttribute)attribute;
+                    }
                 }
-                else
+
+                if (attr != null)
+                {               
+                    //First time saving any relationship, needs to be created.
+                    if (a.Relationships == null)
+                    {
+                        a.Relationships = new List<RelationshipMapping>();
+                    }
+
+                    RelationshipMapping mapping = a.Relationships.FirstOrDefault(t => t.Name == attr.Name);
+                    //First time saving this relationship, so it needs to be created.
+                    if (mapping == null)
+                    {
+                        mapping = new RelationshipMapping();
+                        mapping.Name = attr.Name;
+                        a.Relationships.Add(mapping);
+                    }
+
+                    //If the relationship has been initialized (retrieved from the db), or hasn't been initialized but contains a value,
+                    //compare to known values to see if an update is required.
+                    if (mapping.Initialized || (!mapping.Initialized && p.GetValue(a) != null))
+                    {
+
+                    }
+
+                }
+                else if (!isExcluded)
                 {
-                    string json = JsonConvert.SerializeObject(p.GetValue(a, null) ?? "");
-                    dto.TrySetMember(p.Name, json);
+                    if (IsPrimaryType(p.PropertyType))
+                    {
+                        dto.TrySetMember(p.Name, p.GetValue(a, null) ?? "");
+                    }
+                    else
+                    {
+                        string json = JsonConvert.SerializeObject(p.GetValue(a, null) ?? "");
+                        dto.TrySetMember(p.Name, json);
+                    }
                 }
             }
-
-            //Should be set through the basemodel property
-            dto.RowKey = a.RowKey;
-            dto.PartitionKey = a.PartitionKey;
 
             return dto;
         }
@@ -111,41 +149,25 @@ namespace GameLibrary.Data.Azure
 
             foreach (PropertyInfo p1 in t1.GetProperties())//for each property in the entity,
             {
-                bool isExcluded = false;
-                RelationshipAttribute attr = null;
-                foreach (object attribute in p1.GetCustomAttributes(true))
-                {
-                    if (attribute is ExcludedAttribute)
-                    {
-                        isExcluded = true;
-                    }
-                    if (attribute is RelationshipAttribute)
-                    {
-                        attr = (RelationshipAttribute)attribute;
-                    }
-                }
 
-                if (!isExcluded)
+                foreach (var value in dictionary)
                 {
-                    foreach (var value in dictionary)//see if we have a corresponding property in the DTO
+                    if (p1.Name == value.Key)
                     {
-                        if (p1.Name == value.Key)
+                        if (IsPrimaryType(p1.PropertyType))
                         {
-                            if (IsPrimaryType(p1.PropertyType))
-                            {
-                                p1.SetValue(result, GetValue(value.Value));
-                            }
-                            else
-                            {
-                                object val = JsonConvert.DeserializeObject(GetValue(value.Value).ToString(), p1.PropertyType);
-                                p1.SetValue(result, val);
-                            }
+                            p1.SetValue(result, GetValue(value.Value));
+                        }
+                        else
+                        {
+                            object val = JsonConvert.DeserializeObject(GetValue(value.Value).ToString(), p1.PropertyType);
+                            p1.SetValue(result, val);
                         }
                     }
                 }
+                
 
             }
-            result.RowKey = a.RowKey;
             return result;
         }
 
