@@ -58,11 +58,26 @@ namespace GameLibrary.Data.Azure
             return mappedList;
         }
 
+        public virtual void Delete(TEntity entity)
+        {
+            dynamic mapped = CreateDTO(entity);
+            TableOperation deleteOperation = TableOperation.Delete(mapped);
+            table.Execute(deleteOperation);
+        }
+
         public virtual void Insert(TEntity entity)
         {
             dynamic mapped = CreateDTO(entity);
             TableOperation insertOperation = TableOperation.Insert(mapped);
             table.Execute(insertOperation);
+        }
+
+        public virtual void Update(TEntity entity)
+        {
+            dynamic mapped = CreateDTO(entity);
+            TableOperation updateOpertaion = TableOperation.Replace(mapped);
+            table.Execute(updateOpertaion);
+
         }
 
         public virtual TEntity GetById(object id)
@@ -119,7 +134,7 @@ namespace GameLibrary.Data.Azure
                     //compare to known values to see if an update is required.
                     if (mapping.Initialized || (!mapping.Initialized && p.GetValue(a) != null))
                     {
-
+                        List<AzureAction> actions = mapping.GetUpdates(attr, (List<BaseModel>)p.GetValue(a));
                     }
 
                 }

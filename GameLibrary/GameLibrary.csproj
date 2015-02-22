@@ -69,6 +69,7 @@
     <Compile Include="Data\Azure\AzureContext.cs" />
     <Compile Include="Data\Azure\Identity\BlobOptimisticSyncStore.cs" />
     <Compile Include="Data\Azure\Identity\IOptimisticSyncStore.cs" />
+    <Compile Include="Data\Azure\Model\AzureAction.cs" />
     <Compile Include="Data\Azure\Model\Relationship.cs" />
     <Compile Include="Data\Azure\Model\RelationshipMapping.cs" />
     <Compile Include="Data\Azure\Repositories\IdeaRepository.cs" />

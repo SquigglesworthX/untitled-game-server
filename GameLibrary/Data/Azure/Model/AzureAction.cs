@@ -22,6 +22,11 @@ namespace GameLibrary.Data.Azure.Model
         public ActionType Action { get; private set; }
 
         /// <summary>
+        /// Indicates whether this action has been processed by a tableset yet.
+        /// </summary>
+        public bool IsProcessed = false;
+
+        /// <summary>
         /// Returns an action that can be passed to an Azure repository to be committed. 
         /// </summary>
         /// <param name="model">The model pending an action for Azure storage. </param>

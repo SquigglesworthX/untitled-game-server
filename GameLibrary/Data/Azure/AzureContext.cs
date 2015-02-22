@@ -77,6 +77,22 @@ namespace GameLibrary.Data.Azure
             }
         }
 
+        public void CommitChanges()
+        {
+            ideaRepository.CommitChanges();
+            ideaMappingRepository.CommitChanges();
+            relationshipRepository.CommitChanges();
+            playerRepository.CommitChanges();
+        }
+
+        public void Rollback()
+        {
+            ideaRepository.RollbackChanges();
+            ideaMappingRepository.RollbackChanges();
+            relationshipRepository.RollbackChanges();
+            playerRepository.RollbackChanges();
+        }
+
         #region IDisposable
         public void Dispose()
         {

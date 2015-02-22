@@ -33,7 +33,7 @@ namespace GameLibrary.Data.Azure.Model
         [JsonIgnore]
         public List<Relationship> Relationships;
 
-        public List<AzureAction> GetUpdates(RelationshipAttribute attribute, List<BaseModel> models)
+        internal List<AzureAction> GetUpdates(RelationshipAttribute attribute, List<BaseModel> models)
         {
             //attribute.GetForeignRelationshipId(re
 

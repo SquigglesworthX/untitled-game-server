@@ -1,4 +1,5 @@
 ﻿using GameLibrary.Data.Azure.Identity;
+using GameLibrary.Data.Azure.Model;
 using GameLibrary.Data.Core;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -13,10 +14,14 @@ namespace GameLibrary.Data.Azure.Repositories
     internal class RepositoryBase<TEntity> : IRepositoryBase<TEntity> 
         where TEntity : BaseModel, new()
     {
-        internal AzureContext context;
-        internal string TableName;
-        internal TableSet<TEntity> dbset;
-        internal UniqueIdGenerator Generator;
+        public AzureContext context;
+        public string TableName;
+        public TableSet<TEntity> dbset;
+        public UniqueIdGenerator Generator;
+
+        private readonly object lockobject = new object();
+
+        protected List<AzureAction> PendingActions = new List<AzureAction>();
 
         protected Func<TEntity, string> partitionKeyFunction;
 
@@ -57,9 +62,9 @@ namespace GameLibrary.Data.Azure.Repositories
         public void Add(TEntity item)
         {
             item.RowKey = Generator.GetNextId();
-            item.PartitionKey = partitionKeyFunction(item);            
+            item.PartitionKey = partitionKeyFunction(item);
 
-            dbset.Insert(item);
+            PendingActions.Add(new AzureAction(item, ActionType.Insert));            
         }
         
         // Woo. Clearing everything in one shot.
@@ -70,7 +75,11 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool Contains(TEntity item)
         {
-            throw new NotImplementedException();
+            if (dbset.GetById(item.RowKey) != null)
+            {
+                return true;
+            }
+            return false;
         }
 
         public void CopyTo(TEntity[] array, int arrayIndex)
@@ -85,12 +94,13 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool IsReadOnly
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public bool Remove(TEntity item)
         {
-            throw new NotImplementedException();
+            PendingActions.Add(new AzureAction(item, ActionType.Delete));
+            return true;
         }
 
         public IEnumerator<TEntity> GetEnumerator()
@@ -100,12 +110,68 @@ namespace GameLibrary.Data.Azure.Repositories
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return dbset.GetAll().GetEnumerator();
         }
 
         public List<TEntity> GetAll()
         {
             return dbset.GetAll();
+        }
+
+        /// <summary>
+        /// Threadsafe method to commit the changes to the azure table.
+        /// </summary>
+        public void CommitChanges()
+        {
+            lock (lockobject)
+            {
+                foreach (AzureAction action in PendingActions.Where(t => !t.IsProcessed))
+                {
+                    ProcessAction(action);
+                }
+
+                PendingActions.RemoveAll(t => t.IsProcessed);
+            }
+        }
+
+        protected void ProcessAction(AzureAction action)
+        {
+            switch (action.Action)
+            {
+                case ActionType.Insert:
+                    dbset.Insert((TEntity)action.Model);
+                    break;
+                case ActionType.Delete:
+                    dbset.Delete((TEntity)action.Model);
+                    break;
+                case ActionType.Update:
+                    dbset.Update((TEntity)action.Model);
+                    break;
+            }
+
+            action.IsProcessed = true;
+        }
+
+
+        public void Update(TEntity entity)
+        {
+            PendingActions.Add(new AzureAction(entity, ActionType.Update));
+        }
+
+
+        public void RollbackChanges()
+        {
+            //Use the same lockobject - we want to also prevent rollback and committing at the same time. 
+            lock (lockobject)
+            {
+                foreach (AzureAction action in PendingActions.Where(t => !t.IsProcessed))
+                {
+                    action.UpdateAction(ActionType.Ignore);
+                    action.IsProcessed = true;
+                }
+
+                PendingActions.RemoveAll(t => t.IsProcessed);
+            }
         }
     }
 }
