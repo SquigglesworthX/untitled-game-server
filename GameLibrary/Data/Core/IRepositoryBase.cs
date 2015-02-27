@@ -6,13 +6,17 @@ using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Core
 {
-    public interface IRepositoryBase<TEntity>: ICollection<TEntity>
+    public interface IRepositoryBase<TEntity>: ICollection<TEntity>, IRepositoryBase
         where TEntity : class, new()
     {
         List<TEntity> GetAll();
-        TEntity GetById(string id);
+        TEntity GetById(string id);       
+        void Update(TEntity entity);        
+    }
+
+    public interface IRepositoryBase
+    {
         void CommitChanges();
-        void Update(TEntity entity);
         void RollbackChanges();
     }
 }
