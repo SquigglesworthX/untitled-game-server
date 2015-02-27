@@ -47,7 +47,7 @@ namespace ServiceRole
 
             Trace.TraceInformation("ServiceRole has been started");
 
-            ChecksIds();
+            //ChecksIds();
             FetchTest(InsertTest());
 
             return result;
@@ -79,7 +79,7 @@ namespace ServiceRole
         private string InsertTest()
         {
             var context = ContextFactory.GetContext();
-            for (int i = 0; i < 1024; i++)
+            for (int i = 0; i < 4; i++)
             {
                 Idea idea = new Idea()
                 {
@@ -89,7 +89,7 @@ namespace ServiceRole
                 context.IdeaRepository.Add(idea);
             }
 
-
+            context.CommitAsync();
             return "";
         }
 
@@ -104,7 +104,7 @@ namespace ServiceRole
             var context = ContextFactory.GetContext();
             var ideas = context.IdeaRepository.GetAll();
             int i = ideas.Count;
-            foreach (Idea idea in ideas.Where(t=>t.RowKey != null))
+            foreach (Idea idea in ideas)
             {
                 var t = UniqueIdGenerator.GetIntFromId(idea.RowKey);
             }

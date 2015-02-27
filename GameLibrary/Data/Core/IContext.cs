@@ -14,5 +14,8 @@ namespace GameLibrary.Data.Core
         IRepositoryBase<IdeaMapping> IdeaMappingRepository { get; }
         IRepositoryBase<Relationship> RelationshipRepository { get; }
         IRepositoryBase<Player> PlayerRepository { get; }
+        void Rollback();
+        void Commit();
+        Task CommitAsync();
     }
 }

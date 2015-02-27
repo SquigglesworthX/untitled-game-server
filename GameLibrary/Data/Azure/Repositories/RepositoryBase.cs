@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GameLibrary.Data.Azure.Repositories
@@ -18,6 +19,8 @@ namespace GameLibrary.Data.Azure.Repositories
         public string TableName;
         public TableSet<TEntity> dbset;
         public UniqueIdGenerator Generator;
+
+        public bool IsCommittingAsync = false;
 
         private readonly object lockobject = new object();
 
@@ -63,8 +66,7 @@ namespace GameLibrary.Data.Azure.Repositories
         {
             item.RowKey = Generator.GetNextId();
             item.PartitionKey = partitionKeyFunction(item);
-
-            PendingActions.Add(new AzureAction(item, ActionType.Insert));            
+            InsertAction(new AzureAction(item, ActionType.Insert));     
         }
         
         // Woo. Clearing everything in one shot.
@@ -99,7 +101,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool Remove(TEntity item)
         {
-            PendingActions.Add(new AzureAction(item, ActionType.Delete));
+            InsertAction(new AzureAction(item, ActionType.Delete));
             return true;
         }
 
@@ -118,49 +120,55 @@ namespace GameLibrary.Data.Azure.Repositories
             return dbset.GetAll();
         }
 
+
+        public void Update(TEntity entity)
+        {
+            InsertAction(new AzureAction(entity, ActionType.Update));
+        }
+
+        protected void InsertAction(AzureAction action)
+        {
+            //Don't want to make changes if we're committing/rollingback
+            while(IsCommittingAsync)
+            {
+                Thread.Sleep(10);
+            }
+            lock (lockobject)
+            {
+                PendingActions.Add(action);
+            }
+        }
+
         /// <summary>
         /// Threadsafe method to commit the changes to the azure table.
         /// </summary>
         public void CommitChanges()
         {
+            //Probably a better way to do this. 
+            while (IsCommittingAsync)
+            {
+                Thread.Sleep(10);
+            }
             lock (lockobject)
             {
-                foreach (AzureAction action in PendingActions.Where(t => !t.IsProcessed))
+
+                var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => t.Model.PartitionKey);
+                
+                foreach(IGrouping<string, AzureAction> group in actions)
                 {
-                    ProcessAction(action);
+                    ProcessActions(group);                    
                 }
 
                 PendingActions.RemoveAll(t => t.IsProcessed);
             }
         }
 
-        protected void ProcessAction(AzureAction action)
-        {
-            switch (action.Action)
-            {
-                case ActionType.Insert:
-                    dbset.Insert((TEntity)action.Model);
-                    break;
-                case ActionType.Delete:
-                    dbset.Delete((TEntity)action.Model);
-                    break;
-                case ActionType.Update:
-                    dbset.Update((TEntity)action.Model);
-                    break;
-            }
-
-            action.IsProcessed = true;
-        }
-
-
-        public void Update(TEntity entity)
-        {
-            PendingActions.Add(new AzureAction(entity, ActionType.Update));
-        }
-
-
         public void RollbackChanges()
         {
+            while (IsCommittingAsync)
+            {
+                Thread.Sleep(10);
+            }
             //Use the same lockobject - we want to also prevent rollback and committing at the same time. 
             lock (lockobject)
             {
@@ -173,5 +181,67 @@ namespace GameLibrary.Data.Azure.Repositories
                 PendingActions.RemoveAll(t => t.IsProcessed);
             }
         }
+
+
+        public async Task CommitChangesAsync()
+        {
+            while (IsCommittingAsync)
+            {
+                Thread.Sleep(10);
+            }
+
+            lock(lockobject)
+            {
+                //Another thread beat it here, force it to go syncronous. 
+                if (IsCommittingAsync)
+                {
+                    CommitChanges();
+                    return;
+                }
+                IsCommittingAsync = true;
+            }
+
+            var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => t.Model.PartitionKey);
+
+            foreach (IGrouping<string, AzureAction> group in actions)
+            {
+                await ProcessActionsAsync(group);
+            }
+
+            PendingActions.RemoveAll(t => t.IsProcessed);
+
+            IsCommittingAsync = false;
+            
+
+        }
+
+        /// <summary>
+        /// Processes actions in bulk.
+        /// </summary>
+        /// <param name="actions">AzureActions that all have an identical partition key.</param>
+        protected void ProcessActions(IEnumerable<AzureAction> actions)
+        {
+            while (actions.Any(t => !t.IsProcessed))
+            {
+                var acts = actions.Where(t => !t.IsProcessed).Take(100);
+
+                dbset.BatchOperation(acts);
+            }       
+        }
+
+        /// <summary>
+        /// Processes actions in bulk.
+        /// </summary>
+        /// <param name="actions">AzureActions that all have an identical partition key.</param>
+        protected async Task ProcessActionsAsync(IEnumerable<AzureAction> actions)
+        {
+            while (actions.Any(t => !t.IsProcessed))
+            {
+                var acts = actions.Where(t => !t.IsProcessed).Take(100);
+
+                await dbset.BatchOperationAsync(acts);
+            }
+        }
+
     }
 }

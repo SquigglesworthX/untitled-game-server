@@ -18,16 +18,18 @@ namespace GameLibrary.Data.Azure
 
         public List<IRepositoryBase> Repositories;
 
-        private RepositoryBase<Idea> ideaRepository;
-        private RepositoryBase<IdeaMapping> ideaMappingRepository;
-        private RepositoryBase<Relationship> relationshipRepository;
-        private RepositoryBase<Player> playerRepository;
+        private RepositoryBase<Idea> ideaRepository { get; set; }
+        private RepositoryBase<IdeaMapping> ideaMappingRepository { get; set; }
+        private RepositoryBase<Relationship> relationshipRepository { get; set; }
+        private RepositoryBase<Player> playerRepository { get; set; }
 
-        public AzureContext()
+        public AzureContext(CloudStorageAccount storageAccount = null)
         {
             //Temporary for development. We should probably get rid of this constructor eventually. 
-            connection = "UseDevelopmentStorage=true;";
-            StorageAccount = CloudStorageAccount.Parse(connection);
+            if (storageAccount == null)
+                storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+
+            StorageAccount = storageAccount;
             Repositories = new List<IRepositoryBase>();
         }
 
@@ -40,8 +42,6 @@ namespace GameLibrary.Data.Azure
         {
             get
             {
-                return GetRepository<IRepositoryBase<Idea>>(ideaRepository, () => new RepositoryBase<Idea>(this));
-                /*
                 if (ideaRepository == null)
                 {
                     ideaRepository = new RepositoryBase<Idea>(this);
@@ -49,7 +49,6 @@ namespace GameLibrary.Data.Azure
                 }
 
                 return ideaRepository;
-                 * */
             }
         }
 
@@ -57,8 +56,6 @@ namespace GameLibrary.Data.Azure
         {
             get
             {
-                return GetRepository<IRepositoryBase<Relationship>>(relationshipRepository, () => new RepositoryBase<Relationship>(this, partitionKeyFunction: (a) => a.Name + "_" + a.DocumentId));
-                /*
                 if (relationshipRepository == null)
                 {
                     relationshipRepository = new RepositoryBase<Relationship>(this, partitionKeyFunction: (a) => a.Name + "_" + a.DocumentId);
@@ -66,7 +63,6 @@ namespace GameLibrary.Data.Azure
                 }
 
                 return relationshipRepository;
-                 * */
             }
         }
 
@@ -74,8 +70,6 @@ namespace GameLibrary.Data.Azure
         {
             get
             {
-                return GetRepository<IRepositoryBase<IdeaMapping>>(ideaMappingRepository, () => new RepositoryBase<IdeaMapping>(this));
-                /*
                 if (ideaMappingRepository == null)
                 {
                     ideaMappingRepository = new RepositoryBase<IdeaMapping>(this);
@@ -83,7 +77,6 @@ namespace GameLibrary.Data.Azure
                 }
 
                 return ideaMappingRepository;
-                 * */
             }
         }
 
@@ -91,8 +84,6 @@ namespace GameLibrary.Data.Azure
         {
             get
             {
-                return GetRepository<IRepositoryBase<Player>>(playerRepository, () => new RepositoryBase<Player>(this));
-                /*
                 if (playerRepository == null)
                 {
                     playerRepository = new RepositoryBase<Player>(this);
@@ -100,11 +91,11 @@ namespace GameLibrary.Data.Azure
                 }
 
                 return playerRepository;
-                 * */
             }
         }
 
-        public void CommitChanges()
+
+        public void Commit()
         {
             foreach (IRepositoryBase repo in Repositories)
             {
@@ -120,15 +111,12 @@ namespace GameLibrary.Data.Azure
             }
         }
 
-        protected t GetRepository<t>(t repo, Func<t> constructor) where t : IRepositoryBase
+        public async Task CommitAsync()
         {
-            if (repo == null)
+            foreach (IRepositoryBase repo in Repositories)
             {
-                repo = constructor();
-                Repositories.Add(repo);
+                await repo.CommitChangesAsync();
             }
-
-            return repo;
         }
 
         #region IDisposable
@@ -146,6 +134,9 @@ namespace GameLibrary.Data.Azure
             }
         }
         #endregion
+
+
+
 
 
 

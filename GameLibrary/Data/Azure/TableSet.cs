@@ -77,16 +77,55 @@ namespace GameLibrary.Data.Azure
             dynamic mapped = CreateDTO(entity);
             TableOperation updateOpertaion = TableOperation.Replace(mapped);
             table.Execute(updateOpertaion);
+        }
 
+        public virtual void BatchOperation(IEnumerable<AzureAction> actions)
+        {
+            TableBatchOperation batchOperation = PrepareBatch(actions);
+
+            table.ExecuteBatch(batchOperation);
+        }
+
+        public virtual async Task BatchOperationAsync(IEnumerable<AzureAction> actions)
+        {
+            TableBatchOperation batchOperation = PrepareBatch(actions);
+
+            await table.ExecuteBatchAsync(batchOperation);
         }
 
         public virtual TEntity GetById(object id)
         {
-            var query = new TableQuery().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToString()));
+            var query = new TableQuery().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, id.ToString()));
             var result = table.ExecuteQuery(query).First();
 
             dynamic mapped = StripDTO(result);
             return mapped;
+        }
+
+        private TableBatchOperation PrepareBatch(IEnumerable<AzureAction> actions)
+        {
+            TableBatchOperation batchOperation = new TableBatchOperation();
+
+            foreach (AzureAction action in actions)
+            {
+                dynamic mapped = CreateDTO((TEntity)action.Model);
+
+                switch (action.Action)
+                {
+                    case ActionType.Insert:
+                        batchOperation.Insert(mapped);
+                        break;
+                    case ActionType.Delete:
+                        batchOperation.Delete(mapped);
+                        break;
+                    case ActionType.Update:
+                        batchOperation.Replace(mapped);
+                        break;
+                }
+
+                action.IsProcessed = true;
+            }
+            return batchOperation;
         }
 
         #region object mapping
@@ -183,6 +222,10 @@ namespace GameLibrary.Data.Azure
                 
 
             }
+            result.ETag = a.ETag;
+            result.PartitionKey = a.PartitionKey;
+            result.RowKey = a.RowKey;
+
             return result;
         }
 
