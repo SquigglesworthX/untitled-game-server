@@ -16,6 +16,7 @@ namespace GameLibrary.Data.Core
         IRepositoryBase<Player> PlayerRepository { get; }
         void Rollback();
         void Commit();
-        Task CommitAsync();
+        void PartialCommit(TimeSpan timeout);
+        //Task CommitAsync();
     }
 }

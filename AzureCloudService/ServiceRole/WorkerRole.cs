@@ -89,7 +89,7 @@ namespace ServiceRole
                 context.IdeaRepository.Add(idea);
             }
 
-            context.CommitAsync();
+            context.Commit();
             return "";
         }
 

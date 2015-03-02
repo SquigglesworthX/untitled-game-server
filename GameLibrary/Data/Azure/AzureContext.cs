@@ -94,13 +94,24 @@ namespace GameLibrary.Data.Azure
             }
         }
 
-
         public void Commit()
         {
+            List<Task> tasks = new List<Task>();
+            foreach (IRepositoryBase repo in Repositories)
+            {                
+                tasks.Add(repo.CommitChangesAsync());
+            }
+            Task.WaitAll(tasks.ToArray());
+        }
+
+        public void PartialCommit(TimeSpan timeout)
+        {
+            List<Task> tasks = new List<Task>();
             foreach (IRepositoryBase repo in Repositories)
             {
-                repo.CommitChanges();
+                tasks.Add(repo.CommitPartialAsync(timeout));
             }
+            Task.WaitAll(tasks.ToArray());
         }
 
         public void Rollback()
@@ -108,14 +119,6 @@ namespace GameLibrary.Data.Azure
             foreach (IRepositoryBase repo in Repositories)
             {
                 repo.RollbackChanges();
-            }
-        }
-
-        public async Task CommitAsync()
-        {
-            foreach (IRepositoryBase repo in Repositories)
-            {
-                await repo.CommitChangesAsync();
             }
         }
 
@@ -134,11 +137,6 @@ namespace GameLibrary.Data.Azure
             }
         }
         #endregion
-
-
-
-
-
 
     }
 }

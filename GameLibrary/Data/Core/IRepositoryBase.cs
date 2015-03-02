@@ -18,6 +18,7 @@ namespace GameLibrary.Data.Core
         void CommitChanges();
         void RollbackChanges();
         Task CommitChangesAsync();
+        Task CommitPartialAsync(TimeSpan timeout);
     }
 }
 

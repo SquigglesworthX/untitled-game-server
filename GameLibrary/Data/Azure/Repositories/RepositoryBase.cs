@@ -122,15 +122,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         protected void InsertAction(AzureAction action)
         {
-            //Don't want to make changes if we're committing/rollingback
-            while(IsCommittingAsync)
-            {
-                Thread.Sleep(10);
-            }
-            lock (lockobject)
-            {
-                PendingActions.Add(action);
-            }
+            PendingActions.Add(action);
         }
 
         /// <summary>
@@ -186,10 +178,9 @@ namespace GameLibrary.Data.Azure.Repositories
 
             lock(lockobject)
             {
-                //Another thread beat it here, force it to go syncronous. 
+                //Another thread beat it here, might as well abandon since it's already committing.
                 if (IsCommittingAsync)
                 {
-                    CommitChanges();
                     return;
                 }
                 IsCommittingAsync = true;
@@ -237,5 +228,9 @@ namespace GameLibrary.Data.Azure.Repositories
             }
         }
 
+        public Task CommitPartialAsync(TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

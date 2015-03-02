@@ -70,6 +70,7 @@ namespace GameLibrary.Data.Azure
             dynamic mapped = CreateDTO(entity);
             TableOperation insertOperation = TableOperation.Insert(mapped);
             table.Execute(insertOperation);
+            entity.ETag = mapped.Etag;
         }
 
         public virtual void Update(TEntity entity)
@@ -77,6 +78,7 @@ namespace GameLibrary.Data.Azure
             dynamic mapped = CreateDTO(entity);
             TableOperation updateOpertaion = TableOperation.Replace(mapped);
             table.Execute(updateOpertaion);
+            entity.ETag = mapped.Etag;
         }
 
         public virtual void BatchOperation(IEnumerable<AzureAction> actions)
