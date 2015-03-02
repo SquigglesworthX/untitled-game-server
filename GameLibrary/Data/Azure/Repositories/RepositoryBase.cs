@@ -115,12 +115,6 @@ namespace GameLibrary.Data.Azure.Repositories
             return dbset.GetAll().GetEnumerator();
         }
 
-        public List<TEntity> GetAll()
-        {
-            return dbset.GetAll();
-        }
-
-
         public void Update(TEntity entity)
         {
             InsertAction(new AzureAction(entity, ActionType.Update));

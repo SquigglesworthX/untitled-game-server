@@ -102,9 +102,7 @@ namespace ServiceRole
         private void ChecksIds()
         {
             var context = ContextFactory.GetContext();
-            var ideas = context.IdeaRepository.GetAll();
-            int i = ideas.Count;
-            foreach (Idea idea in ideas)
+            foreach (Idea idea in context.IdeaRepository)
             {
                 var t = UniqueIdGenerator.GetIntFromId(idea.RowKey);
             }
