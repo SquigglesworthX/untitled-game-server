@@ -5,17 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameLibrary.Data.Azure.Model
+namespace GameLibrary.Data.Core.Caching
 {
     /// <summary>
     /// Used to track pending actions to be committed to the Azure tables.
     /// </summary>
-    public class AzureAction
+    public class DatabaseAction
     {
         /// <summary>
         /// The model pending an action for Azure storage. 
         /// </summary>
-        public BaseModel Model {get; private set;}
+        public object Model {get; private set;}
         /// <summary>
         /// The database command to be performed. 
         /// </summary>
@@ -31,7 +31,7 @@ namespace GameLibrary.Data.Azure.Model
         /// </summary>
         /// <param name="model">The model pending an action for Azure storage. </param>
         /// <param name="action">The database command to be performed. </param>
-        public AzureAction(BaseModel model, ActionType action)
+        public DatabaseAction(object model, ActionType action)
         {
             Model = model;
             Action = action;

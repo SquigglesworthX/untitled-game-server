@@ -1,5 +1,6 @@
 ﻿using GameLibrary.Data.Azure.Model;
 using GameLibrary.Data.Core;
+using GameLibrary.Data.Core.Caching;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -81,14 +82,23 @@ namespace GameLibrary.Data.Azure
             entity.ETag = mapped.Etag;
         }
 
-        public virtual void BatchOperation(IEnumerable<AzureAction> actions)
+        public virtual void BatchOperation(IEnumerable<DatabaseAction> actions)
         {
             TableBatchOperation batchOperation = PrepareBatch(actions);
+            
+            var results = table.ExecuteBatch(batchOperation);
 
-            table.ExecuteBatch(batchOperation);
+            //Need to map etag back to the model here
+            List<BaseModel> models = actions.Select(t=>(BaseModel)t.Model).ToList();
+            foreach (TableResult result in results)
+            {
+                dynamic res = result.Result;
+                //BaseModel model = models.FirstOrDefault(t => t.PartitionKey = res.PartitionKey && t.RowKey == res.RowKey);
+
+            }
         }
 
-        public virtual async Task BatchOperationAsync(IEnumerable<AzureAction> actions)
+        public virtual async Task BatchOperationAsync(IEnumerable<DatabaseAction> actions)
         {
             TableBatchOperation batchOperation = PrepareBatch(actions);
 
@@ -104,11 +114,11 @@ namespace GameLibrary.Data.Azure
             return mapped;
         }
 
-        private TableBatchOperation PrepareBatch(IEnumerable<AzureAction> actions)
+        private TableBatchOperation PrepareBatch(IEnumerable<DatabaseAction> actions)
         {
             TableBatchOperation batchOperation = new TableBatchOperation();
 
-            foreach (AzureAction action in actions)
+            foreach (DatabaseAction action in actions)
             {
                 dynamic mapped = CreateDTO((TEntity)action.Model);
 
@@ -175,7 +185,7 @@ namespace GameLibrary.Data.Azure
                     //compare to known values to see if an update is required.
                     if (mapping.Initialized || (!mapping.Initialized && p.GetValue(a) != null))
                     {
-                        List<AzureAction> actions = mapping.GetUpdates(attr, (List<BaseModel>)p.GetValue(a));
+                        List<DatabaseAction> actions = mapping.GetUpdates(attr, (List<BaseModel>)p.GetValue(a));
                     }
 
                 }

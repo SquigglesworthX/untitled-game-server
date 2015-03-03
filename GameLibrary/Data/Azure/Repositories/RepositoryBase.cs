@@ -1,6 +1,7 @@
 ﻿using GameLibrary.Data.Azure.Identity;
 using GameLibrary.Data.Azure.Model;
 using GameLibrary.Data.Core;
+using GameLibrary.Data.Core.Caching;
 using GameLibrary.Data.Model;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
@@ -24,7 +25,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         private readonly object lockobject = new object();
 
-        protected List<AzureAction> PendingActions = new List<AzureAction>();
+        protected List<DatabaseAction> PendingActions = new List<DatabaseAction>();
 
         protected Func<TEntity, string> partitionKeyFunction;
 
@@ -66,7 +67,7 @@ namespace GameLibrary.Data.Azure.Repositories
         {
             item.RowKey = Generator.GetNextId();
             item.PartitionKey = partitionKeyFunction(item);
-            InsertAction(new AzureAction(item, ActionType.Insert));     
+            InsertAction(new DatabaseAction(item, ActionType.Insert));     
         }
         
         // Woo. Clearing everything in one shot.
@@ -101,7 +102,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool Remove(TEntity item)
         {
-            InsertAction(new AzureAction(item, ActionType.Delete));
+            InsertAction(new DatabaseAction(item, ActionType.Delete));
             return true;
         }
 
@@ -117,10 +118,10 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public void Update(TEntity entity)
         {
-            InsertAction(new AzureAction(entity, ActionType.Update));
+            InsertAction(new DatabaseAction(entity, ActionType.Update));
         }
 
-        protected void InsertAction(AzureAction action)
+        protected void InsertAction(DatabaseAction action)
         {
             PendingActions.Add(action);
         }
@@ -138,9 +139,9 @@ namespace GameLibrary.Data.Azure.Repositories
             lock (lockobject)
             {
 
-                var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => t.Model.PartitionKey);
+                var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => ((BaseModel)t.Model).PartitionKey);
                 
-                foreach(IGrouping<string, AzureAction> group in actions)
+                foreach(IGrouping<string, DatabaseAction> group in actions)
                 {
                     ProcessActions(group);                    
                 }
@@ -158,7 +159,7 @@ namespace GameLibrary.Data.Azure.Repositories
             //Use the same lockobject - we want to also prevent rollback and committing at the same time. 
             lock (lockobject)
             {
-                foreach (AzureAction action in PendingActions.Where(t => !t.IsProcessed))
+                foreach (DatabaseAction action in PendingActions.Where(t => !t.IsProcessed))
                 {
                     action.UpdateAction(ActionType.Ignore);
                     action.IsProcessed = true;
@@ -186,9 +187,9 @@ namespace GameLibrary.Data.Azure.Repositories
                 IsCommittingAsync = true;
             }
 
-            var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => t.Model.PartitionKey);
+            var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => ((BaseModel)t.Model).PartitionKey);
 
-            foreach (IGrouping<string, AzureAction> group in actions)
+            foreach (IGrouping<string, DatabaseAction> group in actions)
             {
                 await ProcessActionsAsync(group);
             }
@@ -204,7 +205,7 @@ namespace GameLibrary.Data.Azure.Repositories
         /// Processes actions in bulk.
         /// </summary>
         /// <param name="actions">AzureActions that all have an identical partition key.</param>
-        protected void ProcessActions(IEnumerable<AzureAction> actions)
+        protected void ProcessActions(IEnumerable<DatabaseAction> actions)
         {
             while (actions.Any(t => !t.IsProcessed))
             {
@@ -218,7 +219,7 @@ namespace GameLibrary.Data.Azure.Repositories
         /// Processes actions in bulk.
         /// </summary>
         /// <param name="actions">AzureActions that all have an identical partition key.</param>
-        protected async Task ProcessActionsAsync(IEnumerable<AzureAction> actions)
+        protected async Task ProcessActionsAsync(IEnumerable<DatabaseAction> actions)
         {
             while (actions.Any(t => !t.IsProcessed))
             {

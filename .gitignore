@@ -56,3 +56,5 @@ AzureCloudService/ServiceRole/bin
 AzureCloudService/ServiceRole/obj
 GameLibrary/bin
 GameLibrary/obj
+Server.Tests/bin
+Server.Tests/obj

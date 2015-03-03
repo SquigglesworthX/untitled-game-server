@@ -67,9 +67,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Azure\AzureContext.cs" />
-    <Compile Include="Data\Azure\Identity\BlobOptimisticSyncStore.cs" />
-    <Compile Include="Data\Azure\Identity\IOptimisticSyncStore.cs" />
-    <Compile Include="Data\Azure\Model\AzureAction.cs" />
+    <Compile Include="Data\Identity\BlobOptimisticSyncStore.cs" />
+    <Compile Include="Data\Identity\IOptimisticSyncStore.cs" />
+    <Compile Include="Data\Core\Caching\DatabaseAction.cs" />
     <Compile Include="Data\Azure\Model\Relationship.cs" />
     <Compile Include="Data\Azure\Model\RelationshipMapping.cs" />
     <Compile Include="Data\Azure\Repositories\IdeaRepository.cs" />
@@ -77,7 +77,9 @@
     <Compile Include="Data\Azure\Repositories\RepositoryBase.cs" />
     <Compile Include="Data\Azure\TableEntityDTO.cs" />
     <Compile Include="Data\Azure\TableSet.cs" />
-    <Compile Include="Data\Azure\Identity\UniqueIdGenerator.cs" />
+    <Compile Include="Data\Identity\UniqueIdGenerator.cs" />
+    <Compile Include="Data\Core\Caching\ICache.cs" />
+    <Compile Include="Data\Core\Caching\NullCache.cs" />
     <Compile Include="Data\Core\ExcludedAttribute.cs" />
     <Compile Include="Data\Core\IRepositoryBase.cs" />
     <Compile Include="Data\Core\IContext.cs" />
@@ -96,6 +98,7 @@
     <Folder Include="Data\Json\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

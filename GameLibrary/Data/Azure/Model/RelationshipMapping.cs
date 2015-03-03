@@ -1,4 +1,5 @@
 ﻿using GameLibrary.Data.Core;
+using GameLibrary.Data.Core.Caching;
 using GameLibrary.Data.Model;
 using Newtonsoft.Json;
 using System;
@@ -33,7 +34,7 @@ namespace GameLibrary.Data.Azure.Model
         [JsonIgnore]
         public List<Relationship> Relationships;
 
-        internal List<AzureAction> GetUpdates(RelationshipAttribute attribute, List<BaseModel> models)
+        internal List<DatabaseAction> GetUpdates(RelationshipAttribute attribute, List<BaseModel> models)
         {
             //attribute.GetForeignRelationshipId(re
 
