@@ -79,6 +79,12 @@ namespace ServiceRole
         private string InsertTest()
         {
             var context = ContextFactory.GetContext();
+            foreach (Idea idea in context.IdeaRepository)
+            {
+                context.IdeaRepository.Remove(idea);
+            }
+
+            context.Commit();
             for (int i = 0; i < 4; i++)
             {
                 Idea idea = new Idea()

@@ -13,7 +13,7 @@ namespace Server.Tests
     public class RepositoryTest
     {
         [Test]
-        public void BatchInsert()
+        public void MultipleBatchTest()
         {
             IContext context = ContextFactory.GetContext();
 

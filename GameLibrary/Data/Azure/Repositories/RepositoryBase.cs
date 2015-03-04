@@ -191,7 +191,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
             foreach (IGrouping<string, DatabaseAction> group in actions)
             {
-                await ProcessActionsAsync(group);
+                await ProcessActionsAsync(group);                
             }
 
             PendingActions.RemoveAll(t => t.IsProcessed);

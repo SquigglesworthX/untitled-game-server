@@ -32,7 +32,6 @@ namespace GameLibrary.Data.Azure
             this.tableName = tableName;
             this.Context = context;
 
-            //CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
             tableClient = context.StorageAccount.CreateCloudTableClient();
             table = tableClient.GetTableReference(tableName);
             table.CreateIfNotExists();
@@ -63,46 +62,46 @@ namespace GameLibrary.Data.Azure
         {
             dynamic mapped = CreateDTO(entity);
             TableOperation deleteOperation = TableOperation.Delete(mapped);
-            table.Execute(deleteOperation);
+            var TableResult = table.Execute(deleteOperation);
+            entity.ETag = ((TableEntityDTO)TableResult.Result).ETag;
         }
 
         public virtual void Insert(TEntity entity)
         {
             dynamic mapped = CreateDTO(entity);
             TableOperation insertOperation = TableOperation.Insert(mapped);
-            table.Execute(insertOperation);
-            entity.ETag = mapped.Etag;
+            var TableResult = table.Execute(insertOperation);
+            entity.ETag = ((TableEntityDTO)TableResult.Result).ETag;
         }
 
         public virtual void Update(TEntity entity)
         {
             dynamic mapped = CreateDTO(entity);
             TableOperation updateOpertaion = TableOperation.Replace(mapped);
-            table.Execute(updateOpertaion);
-            entity.ETag = mapped.Etag;
+            var TableResult = table.Execute(updateOpertaion);
+            entity.ETag = ((TableEntityDTO)TableResult.Result).ETag;
         }
 
         public virtual void BatchOperation(IEnumerable<DatabaseAction> actions)
         {
+            //Use tolist to force enumeration before they're removed
+            IEnumerable<BaseModel> models = actions.Select(t => (BaseModel)t.Model).ToList();
             TableBatchOperation batchOperation = PrepareBatch(actions);
             
             var results = table.ExecuteBatch(batchOperation);
 
-            //Need to map etag back to the model here
-            List<BaseModel> models = actions.Select(t=>(BaseModel)t.Model).ToList();
-            foreach (TableResult result in results)
-            {
-                dynamic res = result.Result;
-                //BaseModel model = models.FirstOrDefault(t => t.PartitionKey = res.PartitionKey && t.RowKey == res.RowKey);
-
-            }
+            MatchETags(models, results);
         }
 
         public virtual async Task BatchOperationAsync(IEnumerable<DatabaseAction> actions)
         {
+            //Use tolist to force enumeration before they're removed
+            IEnumerable<BaseModel> models = actions.Select(t => (BaseModel)t.Model).ToList();
             TableBatchOperation batchOperation = PrepareBatch(actions);
 
-            await table.ExecuteBatchAsync(batchOperation);
+            var results = await table.ExecuteBatchAsync(batchOperation);
+
+            MatchETags(models, results);
         }
 
         public virtual TEntity GetById(object id)
@@ -138,6 +137,26 @@ namespace GameLibrary.Data.Azure
                 action.IsProcessed = true;
             }
             return batchOperation;
+        }
+
+        private static void MatchETags(IEnumerable<BaseModel> models, IList<TableResult> results)
+        {
+            //Need to map etag back to the model here
+            //IEnumerable<BaseModel> models = actions.Select(t=>(BaseModel)t.Model);
+            foreach (BaseModel model in models)
+            {
+                foreach (TableResult result in results)
+                {
+                    TableEntityDTO dto = (TableEntityDTO)result.Result;
+                    if (dto.PartitionKey == model.PartitionKey && dto.RowKey== model.RowKey)
+                    {
+                        model.ETag = dto.ETag;
+                        break;
+                    }
+                    //BaseModel model = models.FirstOrDefault(t => t.PartitionKey = res.PartitionKey && t.RowKey == res.RowKey);
+
+                }
+            }
         }
 
         #region object mapping
@@ -185,7 +204,7 @@ namespace GameLibrary.Data.Azure
                     //compare to known values to see if an update is required.
                     if (mapping.Initialized || (!mapping.Initialized && p.GetValue(a) != null))
                     {
-                        List<DatabaseAction> actions = mapping.GetUpdates(attr, (List<BaseModel>)p.GetValue(a));
+                        //List<DatabaseAction> actions = mapping.GetUpdates(attr, (List<BaseModel>)p.GetValue(a));
                     }
 
                 }
@@ -202,7 +221,9 @@ namespace GameLibrary.Data.Azure
                     }
                 }
             }
-
+            dto.ETag = a.ETag;
+            dto.PartitionKey = a.PartitionKey;
+            dto.RowKey = a.RowKey;
             return dto;
         }
 

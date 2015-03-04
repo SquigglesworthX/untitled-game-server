@@ -21,16 +21,19 @@ namespace GameLibrary.Data.Model
         /// <summary>
         /// Unique id used in the Azure rowkey.
         /// </summary>
+        [Excluded]
         public string RowKey { get; set; }
 
         /// <summary>
         /// Unique id used in the Azure partitionkey.
         /// </summary>
+        [Excluded]
         public string PartitionKey { get; set; }
 
         /// <summary>
         /// Identifier used in optimistic concurrency for Azure Storage.
         /// </summary>
+        [Excluded]
         public string ETag { get; set; }
     }
 }
