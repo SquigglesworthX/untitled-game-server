@@ -25,16 +25,21 @@ namespace GameLibrary.Data.Azure.Repositories
 
         private readonly object lockobject = new object();
 
-        protected List<DatabaseAction> PendingActions = new List<DatabaseAction>();
-
         protected Func<TEntity, string> partitionKeyFunction;
+        protected ICache<TEntity> Cache;
 
-        public RepositoryBase(AzureContext context, string tableName = null, Func<TEntity, string> partitionKeyFunction = null)
+        public RepositoryBase(AzureContext context, string tableName = null, Func<TEntity, string> partitionKeyFunction = null, ICache<TEntity> cacheProvider = null)
         {
             if (context == null)
                 throw new ArgumentNullException("Context cannot be null!");
 
+            if (cacheProvider == null)
+            {
+                cacheProvider = new InMemoryCache<TEntity>();
+            }
+
             this.context = context;
+            this.Cache = cacheProvider;
 
             BlobOptimisticSyncStore store = new BlobOptimisticSyncStore(context.StorageAccount, "uniqueids", typeof(TEntity).Name + ".dat");
             Generator = new UniqueIdGenerator(store);
@@ -59,15 +64,15 @@ namespace GameLibrary.Data.Azure.Repositories
         }
 
         public TEntity GetById(string id)
-        {       
-            return dbset.GetById(id);
+        {
+            return Cache.GetById(id, () => dbset.GetById(id));            
         }
 
         public void Add(TEntity item)
         {
             item.RowKey = Generator.GetNextId();
             item.PartitionKey = partitionKeyFunction(item);
-            InsertAction(new DatabaseAction(item, ActionType.Insert));     
+            Cache.Add(item);
         }
         
         // Woo. Clearing everything in one shot.
@@ -78,7 +83,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool Contains(TEntity item)
         {
-            if (dbset.GetById(item.RowKey) != null)
+            if (GetById(item.RowKey) != null)
             {
                 return true;
             }
@@ -102,7 +107,7 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public bool Remove(TEntity item)
         {
-            InsertAction(new DatabaseAction(item, ActionType.Delete));
+            Cache.Delete(item);
             return true;
         }
 
@@ -118,12 +123,8 @@ namespace GameLibrary.Data.Azure.Repositories
 
         public void Update(TEntity entity)
         {
-            InsertAction(new DatabaseAction(entity, ActionType.Update));
-        }
-
-        protected void InsertAction(DatabaseAction action)
-        {
-            PendingActions.Add(action);
+            Cache.Update(entity);
+            //InsertAction(new DatabaseAction(entity, ActionType.Update));
         }
 
         /// <summary>
@@ -138,35 +139,17 @@ namespace GameLibrary.Data.Azure.Repositories
             }
             lock (lockobject)
             {
+                //Need to loop here
+                var actions = Cache.GetBatch();
 
-                var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => ((BaseModel)t.Model).PartitionKey);
-                
-                foreach(IGrouping<string, DatabaseAction> group in actions)
-                {
-                    ProcessActions(group);                    
-                }
+                ProcessActions(actions);                    
 
-                PendingActions.RemoveAll(t => t.IsProcessed);
             }
         }
 
         public void RollbackChanges()
         {
-            while (IsCommittingAsync)
-            {
-                Thread.Sleep(10);
-            }
-            //Use the same lockobject - we want to also prevent rollback and committing at the same time. 
-            lock (lockobject)
-            {
-                foreach (DatabaseAction action in PendingActions.Where(t => !t.IsProcessed))
-                {
-                    action.UpdateAction(ActionType.Ignore);
-                    action.IsProcessed = true;
-                }
-
-                PendingActions.RemoveAll(t => t.IsProcessed);
-            }
+            throw new NotImplementedException();
         }
 
 
@@ -187,14 +170,10 @@ namespace GameLibrary.Data.Azure.Repositories
                 IsCommittingAsync = true;
             }
 
-            var actions = PendingActions.Where(t => !t.IsProcessed).GroupBy(t => ((BaseModel)t.Model).PartitionKey);
+            //Need to loop here
+            var actions = Cache.GetBatch();
 
-            foreach (IGrouping<string, DatabaseAction> group in actions)
-            {
-                await ProcessActionsAsync(group);                
-            }
-
-            PendingActions.RemoveAll(t => t.IsProcessed);
+            await ProcessActionsAsync(actions);                
 
             IsCommittingAsync = false;
             

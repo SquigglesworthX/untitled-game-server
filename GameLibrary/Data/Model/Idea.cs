@@ -1,4 +1,5 @@
-﻿using GameLibrary.Data.Core;
+﻿using GameLibrary.Data.Azure.Model;
+using GameLibrary.Data.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;

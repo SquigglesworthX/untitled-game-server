@@ -79,14 +79,14 @@
     <Compile Include="Data\Azure\TableSet.cs" />
     <Compile Include="Data\Identity\UniqueIdGenerator.cs" />
     <Compile Include="Data\Core\Caching\ICache.cs" />
-    <Compile Include="Data\Core\Caching\NullCache.cs" />
+    <Compile Include="Data\Core\Caching\InMemoryCache.cs" />
     <Compile Include="Data\Core\ExcludedAttribute.cs" />
     <Compile Include="Data\Core\IRepositoryBase.cs" />
     <Compile Include="Data\Core\IContext.cs" />
     <Compile Include="Data\Core\ContextFactory.cs" />
     <Compile Include="Data\Core\RelationshipAttribute.cs" />
     <Compile Include="Data\Model\Idea.cs" />
-    <Compile Include="Data\Model\BaseModel.cs" />
+    <Compile Include="Data\Azure\Model\BaseModel.cs" />
     <Compile Include="Data\Model\IdeaMapping.cs" />
     <Compile Include="Data\Model\Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

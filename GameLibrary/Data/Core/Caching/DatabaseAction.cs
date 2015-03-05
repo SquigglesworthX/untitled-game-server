@@ -27,6 +27,11 @@ namespace GameLibrary.Data.Core.Caching
         public bool IsProcessed = false;
 
         /// <summary>
+        /// Represents when the action was first created;
+        /// </summary>
+        public DateTime Timestamp = DateTime.Now;
+
+        /// <summary>
         /// Returns an action that can be passed to an Azure repository to be committed. 
         /// </summary>
         /// <param name="model">The model pending an action for Azure storage. </param>

@@ -40,7 +40,9 @@ namespace Server.Tests
             }
 
             context.Commit();
-
+            //Not looking for any specific results.. just don't want to see it fail. 
+            //We could probably add confirmation logic after the insert to test to see if it's working, 
+            //but the delete will likely fail if it's not.
         }
     }
 }

@@ -11,6 +11,7 @@ namespace GameLibrary.Data.Core.Caching
     public interface ICache
     {
         IEnumerable<DatabaseAction> GetBatch();
+        IEnumerable<DatabaseAction> GetBatch(TimeSpan timespan);
     }
 
     public interface ICache<TEntity> : ICache
@@ -18,6 +19,6 @@ namespace GameLibrary.Data.Core.Caching
         void Add(TEntity entity);
         void Update(TEntity entity);
         void Delete(TEntity entity);
-        TEntity GetById(string id);
+        TEntity GetById(string id,Func<TEntity> databaseCall);
     }
 }

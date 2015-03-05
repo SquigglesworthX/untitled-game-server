@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameLibrary.Data.Model
+namespace GameLibrary.Data.Azure.Model
 {
     /// <summary>
     /// Used to represent an Azure model base. Normally we wouldn't inherit like this as it causes a direct dependency, but it seems the easiest.
